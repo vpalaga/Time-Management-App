@@ -1,37 +1,42 @@
+home server
 
 # hobby tracker
 
-keep track of your time ... 
 
 
-### paths:
+192.168.178.116
 
-```
+
+
+paths:
+
 * /home
-* /start/_
+* /start/\_
 * /end
 * 
 * /api
 * /api/status
 * /api/stats
 * 
-* /new_routine
-* /add_period # manually add past time periods
-* /edit/_
+* /new\_routine
+* /add\_period # manually add past time periods
+* /edit/\_
 * /
-```
- --- 
+
+
+
+
 
 ## /home : GET
 
-display some of the statistics on a pretty HTML packed page
+display some of the statistics on a pretty html packed page
 
 buttons to:
 
-* /start/_  OR /end
-* /new_hobby
-* /add_period
-* /edit/_
+* /start/\_  OR /end
+* /new\_hobby
+* /add\_period
+* /edit/\_
 * 
 
 
@@ -42,57 +47,57 @@ general stats of some recent history
 
 last 4 weeks calendar
 
-list of most important hobbies
+list of most importnat hobbies
 
-→ with option to edit/delete
+\-> with opton to edit/delete
 
 (show all hobbies)
 
 
 
-## /start/_  POST?
+\## /start/\_ ## POST?
 
-start a new hobby time period of _ id
+start a new hobby time period of \_ id
 
-(just a simple GET or POST) no return needed I think
+(just a simple GET or POST) no return needed i think
 
 
 
-## /end : POST?
+\## /end ## : POST?
 
 ends current running time period if any are running
 
-same with /start, no additional HTML site
+same with /start, no additional html site
 
 
 
-## /api : redirect to ---
+\## /api ## : redirect to ---
 
 
 
-under /api path will be pages that for given GET return JSONs
+under /api path will be pages that for given GET return jsons
 
 
 
-## /api/status : GET
+\## /api/status ## : GET
 
 
 
-return simple JSON of running periods (can be empty)
+return simple json of running periods (can be empty)
 
 
 
-## /api/stats/_ : GET
+\## /api/stats/\_ ## : GET
 
 
 
-return a JSON with all the data from the _ last days
+return a jason with all the data from the \_ last days
 
 
 
-## /new_routine : POST?
+\## /new\_routine ## : POST?
 
-(doesn't have to be a separate page, can be rendered on the home or IDK)
+(doesnt have to be a spearate page, can be rendered on the home or idk)
 
 new routine creation
 
@@ -100,26 +105,24 @@ new routine creation
 
 
 
-## /new_period : POST?
+\## /new\_period ## : POST?
 
-(doesn't have to be a separate page, can be rendered on the home or IDK)
+(doesnt have to be a spearate page, can be rendered on the home or idk)
 
 new period creation
 
-* select routine
-* select start, end time
+* selct routine
+* selct start, end time
 
 
 
-## /edit/_ : POST?
+\## /edit/\_ ## : POST?
 
-(doesn't have to be a separate page, can be rendered on the home or IDK)
+(doesnt have to be a spearate page, can be rendered on the home or idk)
 
-edits already existing period of time under the period id of _
-
-
-
-just sends the corrected JSON of the period
+edits already existing period of time under the period id of \_
 
 
+
+just sends the corrected json of the period
 
