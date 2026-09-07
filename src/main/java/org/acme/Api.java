@@ -70,4 +70,31 @@ public class Api {
             period.running = false;
         }
     }
+
+    @PUT
+    @Path("periods/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Response updatePeriod(Long id, Period updated) {
+        Period period = Period.findById(id);
+        if (period == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        period.start_time = updated.start_time;
+        period.end_time = updated.end_time;
+
+        return Response.ok(period).build();
+    }
+
+    @DELETE
+    @Path("periods/{id}")
+    @Transactional
+    public Response deletePeriod(Long id) {
+        boolean deleted = Period.deleteById(id);
+        return deleted
+                ? Response.noContent().build()
+                : Response.status(Response.Status.NOT_FOUND).build();
+    }
 }

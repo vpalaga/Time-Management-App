@@ -1,3 +1,4 @@
+<!-- This File was developed with Claude AI for learning purposes -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,6 +80,29 @@
         }
         button:hover { background: #eaeaea; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        table#periods-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        #periods-table th, #periods-table td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        #periods-table th {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            border-bottom: 2px solid rgba(0,0,0,0.15);
+        }
+
+        #periods-table tr:last-child td {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -102,6 +126,22 @@
     <button type="submit">Add Hobby</button>
 </form>
 
+<h3>Recent Periods</h3>
+<table id="periods-table">
+    <thead>
+    <tr>
+        <th>Hobby</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Duration</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody id="periods-body">
+    <!-- populated by JS -->
+    </tbody>
+</table>
 <script>
     const hobbyList = document.getElementById('hobby-list');
     const globalStatus = document.getElementById('global-status');
@@ -158,6 +198,101 @@
         });
 
         globalStatus.textContent = anyRunning ? 'A hobby is currently running' : 'Nothing running';
+
+        renderPeriods(hobbies, periods); // add this line at the end
+    }
+
+    let editingPeriodId = null;
+
+    function renderPeriods(hobbies, periods) {
+        const periodsBody = document.getElementById('periods-body');
+        periodsBody.innerHTML = '';
+
+        const hobbyById = Object.fromEntries(hobbies.map(h => [h.id, h]));
+
+        const recent = [...periods]
+            .sort((a, b) => b.id - a.id)
+            .slice(0, 20);
+
+        recent.forEach(period => {
+            const hobby = period.hobby ? hobbyById[period.hobby.id] : null;
+            const tr = document.createElement('tr');
+            tr.style.backgroundColor = hobby ? hobby.color : '#eee';
+
+            if (editingPeriodId === period.id) {
+                tr.innerHTML = `
+                <td>${hobby ? escapeHtml(hobby.title) : 'Unknown'}</td>
+                <td><input type="datetime-local" id="edit-start-${period.id}" value="${toInputValue(period.start_time)}"></td>
+                <td><input type="datetime-local" id="edit-end-${period.id}" value="${toInputValue(period.end_time)}"></td>
+                <td>${period.durationMinutes != null ? period.durationMinutes + ' min' : '—'}</td>
+                <td>${period.running ? '● Running' : '○ Stopped'}</td>
+                <td>
+                    <button onclick="savePeriod(${period.id})">Save</button>
+                    <button onclick="cancelEditPeriod()">Cancel</button>
+                    <button onclick="deletePeriod(${period.id})">Delete</button>
+
+                </td>
+            `;
+            } else {
+                tr.innerHTML = `
+                <td>${hobby ? escapeHtml(hobby.title) : 'Unknown'}</td>
+                <td>${formatDateTime(period.start_time)}</td>
+                <td>${period.end_time ? formatDateTime(period.end_time) : '—'}</td>
+                <td>${period.durationMinutes != null ? period.durationMinutes + ' min' : '—'}</td>
+                <td>${period.running
+                    ? '<span class="hobby-status status-running">● Running</span>'
+                    : '<span class="hobby-status status-stopped">○ Stopped</span>'}</td>
+                <td>
+                    <button onclick="editPeriod(${period.id})">Edit</button>
+                </td>
+            `;
+            }
+
+            periodsBody.appendChild(tr);
+        });
+    }
+
+    function editPeriod(id) {
+        editingPeriodId = id;
+        loadData();
+    }
+
+    function cancelEditPeriod() {
+        editingPeriodId = null;
+        loadData();
+    }
+
+    async function savePeriod(id) {
+        const startInput = document.getElementById(`edit-start-${id}`).value;
+        const endInput = document.getElementById(`edit-end-${id}`).value;
+
+        const body = {
+            start_time: startInput || null,
+            end_time: endInput || null
+        };
+
+        editingPeriodId = null;
+        await submitAction(`/api/periods/${id}`, 'Failed to update period', 'PUT', body);
+    }
+
+    async function deletePeriod(id) {
+        if (!confirm('Delete this period?')) return;
+        editingPeriodId = null;
+        await submitAction(`/api/periods/${id}`, 'Failed to delete period', 'DELETE');
+    }
+
+    function toInputValue(isoString) {
+        if (!isoString) return '';
+        return isoString.substring(0, 16); // trims to "yyyy-MM-ddTHH:mm" for the input
+    }
+
+    function formatDateTime(isoString) {
+        if (!isoString) return '—';
+        const d = new Date(isoString);
+        return d.toLocaleString(undefined, {
+            month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
     }
 
     function escapeHtml(str) {
