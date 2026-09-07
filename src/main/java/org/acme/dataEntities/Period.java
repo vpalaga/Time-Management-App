@@ -4,13 +4,15 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.time.temporal.ChronoUnit;
 
 @Entity
 public class Period extends PanacheEntity{
-    public int hobby_id;
+    @ManyToOne
+    public Hobby hobby;
 
     public LocalDateTime start_time;
     public LocalDateTime end_time;

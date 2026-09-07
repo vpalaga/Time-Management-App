@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hobby Tracker</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 640px;
+            margin: 40px auto;
+            padding: 0 16px;
+            color: #222;
+        }
+        h1 { margin-bottom: 4px; }
+        h2, h3 { margin-top: 32px; }
+
+        #global-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        ul#hobby-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hobby-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .hobby-info { flex: 1; }
+        .hobby-title { font-weight: 600; }
+        .hobby-meta { font-size: 0.85em; opacity: 0.75; }
+
+        .hobby-status {
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-running { color: #1a7f37; }
+        .status-stopped { color: #666; }
+
+        .hobby-actions button {
+            margin-left: 6px;
+            cursor: pointer;
+        }
+
+        form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], input[type="color"] {
+            padding: 6px 8px;
+        }
+
+        button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+            cursor: pointer;
+        }
+        button:hover { background: #eaeaea; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<h1>Hobbies</h1>
+
+<div id="global-controls">
+    <strong id="global-status">Nothing running</strong>
+    <button id="stop-all-btn">Stop current activity</button>
+</div>
+
+<ul id="hobby-list">
+    <!-- populated by JS -->
+</ul>
+
+<h2>Add a Hobby</h2>
+<form id="hobby-form">
+    <input type="text" id="hobby-title" placeholder="Hobby name" required>
+    <input type="text" id="hobby-description" placeholder="Description (optional)">
+    <input type="color" id="hobby-color" value="#87ceeb">
+    <button type="submit">Add Hobby</button>
+</form>
+
+<script>
+    const hobbyList = document.getElementById('hobby-list');
+    const globalStatus = document.getElementById('global-status');
+
+    // --- Load and render everything ---
+    async function loadData() {
+        const [hobbies, periods] = await Promise.all([
+            fetch('/api/hobbies').then(r => r.json()),
+            fetch('/api/periods').then(r => r.json())
+        ]);
+
+        render(hobbies, periods);
+    }
+
+    function render(hobbies, periods) {
+        hobbyList.innerHTML = '';
+
+        let anyRunning = false;
+
+        hobbies.forEach(hobby => {
+            const hobbyPeriods = periods.filter(p => p.hobby && p.hobby.id === hobby.id);
+            const runningPeriod = hobbyPeriods.find(p => p.running);
+            const totalMinutes = hobbyPeriods
+                .filter(p => p.durationMinutes != null)
+                .reduce((sum, p) => sum + p.durationMinutes, 0);
+
+            if (runningPeriod) anyRunning = true;
+
+            const li = document.createElement('li');
+            li.className = 'hobby-card';
+            li.style.backgroundColor = hobby.color || '#eee';
+
+            li.innerHTML = `
+                <div class="hobby-info">
+                    <div class="hobby-title">
+                        ${escapeHtml(hobby.title)}
+                        ${runningPeriod
+                ? '<span class="hobby-status status-running">● Running</span>'
+                : '<span class="hobby-status status-stopped">○ Stopped</span>'}
+                    </div>
+                    <div class="hobby-meta">
+                        ${hobby.description ? escapeHtml(hobby.description) + ' · ' : ''}
+                        Total time: ${totalMinutes} min
+                    </div>
+                </div>
+                <div class="hobby-actions">
+                    <button ${runningPeriod ? 'disabled' : ''} onclick="startHobby(${hobby.id})">Start</button>
+                    <button onclick="deleteHobby(${hobby.id})">Delete</button>
+
+                </div>
+            `;
+
+            hobbyList.appendChild(li);
+        });
+
+        globalStatus.textContent = anyRunning ? 'A hobby is currently running' : 'Nothing running';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str ?? '';
+        return div.innerHTML;
+    }
+
+    // --- Actions ---
+    async function startHobby(hobbyId) {
+        await submitAction(`/api/start/${hobbyId}`, 'Failed to start hobby');
+    }
+
+    async function deleteHobby(id) {
+        if (!confirm('Delete this hobby?')) return;
+        await submitAction(`/api/hobbies/${id}`, 'Failed to delete hobby', 'DELETE');
+    }
+
+    document.getElementById('stop-all-btn').addEventListener('click', async () => {
+        await submitAction('/api/end', 'Failed to stop activity');
+    });
+
+    document.getElementById('hobby-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById('hobby-title').value;
+        const description = document.getElementById('hobby-description').value;
+        const color = document.getElementById('hobby-color').value;
+
+        await submitAction('/api/hobbies', 'Failed to add hobby', 'POST', { title, description, color });
+
+        document.getElementById('hobby-form').reset();
+    });
+
+    // --- Shared fetch helper ---
+    async function submitAction(url, errorMessage, method = 'POST', body = null) {
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: body ? { 'Content-Type': 'application/json' } : undefined,
+                body: body ? JSON.stringify(body) : undefined
+            });
+
+            if (response.ok) {
+                await loadData(); // refresh without a full page reload
+            } else {
+                alert(errorMessage);
+            }
+        } catch (err) {
+            console.error(err);
+            alert(errorMessage);
+        }
+    }
+
+    // Initial load
+    loadData();
+</script>
+
+</body>
+</html>
