@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Fruits</title>
+</head>
+<body>
+<h1>Fruits</h1>
+
+<ul id="fruit-list">
+    {#for fruit in fruits}
+    <li>{fruit.name} ({fruit.color})</li>
+    {/for}
+</ul>
+
+<h2>Add a fruit</h2>
+<form id="fruit-form">
+    <label for="name"></label><input type="text" id="name" placeholder="Name" required>
+    <label for="color"></label><input type="text" id="color" placeholder="Color" required>
+    <button type="submit">Add Fruit</button>
+</form>
+
+<script>
+    document.getElementById('fruit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const color = document.getElementById('color').value;
+
+        const response = await fetch('/fruits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, color })
+        });
+
+        if (response.ok) {
+            location.reload(); // simplest way to refresh the list
+        } else {
+            alert('Failed to add fruit');
+        }
+    });
+</script>
+</body>
+</html>
