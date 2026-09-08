@@ -118,15 +118,7 @@
     <!-- populated by JS -->
 </ul>
 
-<h2>Add a Hobby</h2>
-<form id="hobby-form">
-    <input type="text" id="hobby-title" placeholder="Hobby name" required>
-    <input type="text" id="hobby-description" placeholder="Description (optional)">
-    <input type="color" id="hobby-color" value="#87ceeb">
-    <button type="submit">Add Hobby</button>
-</form>
-
-<h3>Recent Periods</h3>
+<h2>Recent Periods</h2>
 <table id="periods-table">
     <thead>
     <tr>
@@ -142,6 +134,15 @@
     <!-- populated by JS -->
     </tbody>
 </table>
+
+<h3>Add a Hobby</h3>
+<form id="hobby-form">
+    <label for="hobby-title"></label><input type="text" id="hobby-title" placeholder="Hobby name" required>
+    <label for="hobby-description"></label><input type="text" id="hobby-description" placeholder="Description (optional)">
+    <label for="hobby-color"></label><input type="color" id="hobby-color" value="#87ceeb">
+    <button type="submit">Add Hobby</button>
+</form>
+
 <script>
     const hobbyList = document.getElementById('hobby-list');
     const globalStatus = document.getElementById('global-status');
