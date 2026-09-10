@@ -185,7 +185,7 @@
                     </div>
                     <div class="hobby-meta">
                         ${hobby.description ? escapeHtml(hobby.description) + ' · ' : ''}
-                        Total time: ${totalMinutes} min
+                        Total time: ${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60} min
                     </div>
                 </div>
                 <div class="hobby-actions">
@@ -225,7 +225,7 @@
                 <td>${hobby ? escapeHtml(hobby.title) : 'Unknown'}</td>
                 <td><input type="datetime-local" id="edit-start-${period.id}" value="${toInputValue(period.start_time)}"></td>
                 <td><input type="datetime-local" id="edit-end-${period.id}" value="${toInputValue(period.end_time)}"></td>
-                <td>${period.durationMinutes != null ? period.durationMinutes + ' min' : '—'}</td>
+                <td>${period.durationMinutes != null ? Math.floor(period.durationMinutes / 60) + 'h ' + period.durationMinutes % 60 + ' min' : '—'}</td>
                 <td>${period.running ? '● Running' : '○ Stopped'}</td>
                 <td>
                     <button onclick="savePeriod(${period.id})">Save</button>
